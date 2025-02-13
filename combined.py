@@ -1,8 +1,18 @@
+import network, time
 import machine, neopixel
 import utime
 
-n=16
-np=neopixel.NeoPixel(machine.Pin(13), n)
+def makeAccessPoint():
+    ssid = 'WiFi_abc'
+    password = '1'
+
+    ap = network.WLAN(network.AP_IF)
+    ap.config(essid=ssid, password=password)
+    ap.active(True)
+    return ap
+
+n=12
+np=neopixel.NeoPixel(machine.Pin(12), n)
 
 def clear():
     for i in range(n):
@@ -32,21 +42,27 @@ def loading ():
 
 # cycle
 def cycle (r, g, b, time):
-    for i in range(n * 4):
+    for i in range(n):
         for j in range(n):
             np[j] = (0,0,0)
         np[i % n] = (r,g,b)
         np.write()
         utime.sleep_ms(time)
 
-# execution
-def Run (status):
-    match status:
-        case "success":
+
+ap = makeAccessPoint()
+
+try:
+    while True:
+        clientlist = ap.status('stations')
+        clientNum = len(clientlist)
+        if clientNum > 0:
             success()
-        case "failure":
-            failure()
-        case "loading":
+        else:
             loading()
-        case _:
-            print("An error has occured in identifying the status")
+        time.sleep(1)
+except KeyboardInterrupt:
+    failure()
+    time.sleep(1)
+    clear()
+    pass
